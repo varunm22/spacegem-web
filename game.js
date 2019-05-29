@@ -22,9 +22,9 @@ var canvas = document.getElementById("canvas"),
     friction = 0.8,
     gravity = 0.3,
     r = 1.0,
-    world = 1;
+    world = 0,
+    level = 0;
 
-var boxes = leveldata.world[0].level[0].boxes;
 
 canvas.width = width;
 canvas.height = height;
@@ -88,10 +88,10 @@ function update_levels() {
     ctx.font = 40*r + "px Monospace";
     ctx.strokeStyle = "white";
     var i;
-    for (i = 1; i <= leveldata.world[world].level.length; i++) {
-        ctx.fillText(i, 50+i*100*r, 400*r);
+    for (i = 0; i < leveldata.world[world].level.length; i++) {
+        ctx.fillText(i+1, 100+i*100*r, 400*r);
         ctx.beginPath();
-        ctx.arc(50+i*100*r, 385*r, 30, 0, Math.PI * 2, true); // Outer circle
+        ctx.arc(100+i*100*r, 385*r, 30, 0, Math.PI * 2, true); // Outer circle
         ctx.stroke();
     }
 }
@@ -124,6 +124,8 @@ function update_platformer() {
 
     ctx.fillStyle = "black";
     ctx.beginPath();
+
+    var boxes = leveldata.world[0].level[level].boxes;
 
     player.grounded = false;
     for (var i = 0; i < boxes.length; i++) {
@@ -230,8 +232,8 @@ canvas.addEventListener('click', function(event) {
         }
     } else if (screen === 2) {
         if (isInside(mousePos.x % 100*r, mousePos.y, 50*r, 360*r, 200*r, 40*r)) {
-            screen = 2;
-            world = Math.floor(mousePos.x/250)
+            screen = 3;
+            level = Math.floor(mousePos.x/100)
             update();
         }
     }
