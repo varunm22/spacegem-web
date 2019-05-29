@@ -20,54 +20,11 @@ var canvas = document.getElementById("canvas"),
     },
     keys = [],
     friction = 0.8,
-    gravity = 0.3;
+    gravity = 0.3,
+    r = 1.0,
+    world = 1;
 
-var boxes = [];
-
-// dimensions
-boxes.push({
-    x: 0,
-    y: 0,
-    width: 10,
-    height: height
-});
-boxes.push({
-    x: 0,
-    y: height - 2,
-    width: width,
-    height: 50
-});
-boxes.push({
-    x: width - 10,
-    y: 0,
-    width: 50,
-    height: height
-});
-
-boxes.push({
-    x: 120,
-    y: 10,
-    width: 80,
-    height: 80
-});
-boxes.push({
-    x: 170,
-    y: 50,
-    width: 80,
-    height: 80
-});
-boxes.push({
-    x: 220,
-    y: 100,
-    width: 80,
-    height: 80
-});
-boxes.push({
-    x: 270,
-    y: 150,
-    width: 40,
-    height: 40
-});
+var boxes = leveldata.world[0].level[0].boxes;
 
 canvas.width = width;
 canvas.height = height;
@@ -75,27 +32,71 @@ canvas.height = height;
 var screen = 0;
 
 function update() {
+    ctx.clearRect(0, 0, width, height);
     if (screen === 0) {
         update_title()
     } else if (screen === 1) {
-        update_player()
+        update_worlds()
+    } else if (screen === 2) {
+        update_levels()
+    } else if (screen === 3) {
+        update_platformer()
+    } else if (screen === 4) {
+        update_spaceships()
+    } else if (screen === 5) {
+        update_intervals()
+    } else if (screen === 6) {
+        update_narrative() // TODO: make external thing for this
     }
 }
 
 function update_title() {
-    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
-    ctx.font = "60px Monospace";
-    ctx.fillText("SPACEGEM", canvas.width/2, canvas.height/3);
-    ctx.font = "40px Monospace";
-    ctx.fillText("click anywhere to begin", canvas.width/2, canvas.height/1.5);
+    ctx.font = 60*r + "px Monospace";
+    ctx.fillText("SPACEGEM", 400*r, 200*r);
+    ctx.font = 40*r + "px Monospace";
+    ctx.fillText("click anywhere to begin", 400*r, 400*r);
 }
 
-function update_player() {
+function update_worlds() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.font = 60*r + "px Monospace";
+    ctx.fillText("Select World", 400*r, 200*r);
+    ctx.textAlign = "left";
+    ctx.font = 40*r + "px Monospace";
+    ctx.fillText("World 1", 50*r, 400*r);
+    ctx.fillText("World 2", 300*r, 400*r);
+    ctx.fillText("World 3", 550*r, 400*r);
+}
+
+function update_levels() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.font = 60*r + "px Monospace";
+    ctx.fillText("World " + (world+1) + " Levels", 400*r, 200*r);
+    ctx.font = 40*r + "px Monospace";
+    ctx.strokeStyle = "white";
+    var i;
+    for (i = 1; i <= leveldata.world[world].level.length; i++) {
+        ctx.fillText(i, 50+i*100*r, 400*r);
+        ctx.beginPath();
+        ctx.arc(50+i*100*r, 385*r, 30, 0, Math.PI * 2, true); // Outer circle
+        ctx.stroke();
+    }
+}
+
+function update_platformer() {
     // check keys
     if (keys[38] || keys[32]) {
         // up arrow or space
@@ -121,7 +122,6 @@ function update_player() {
     player.velX *= friction;
     player.velY += gravity;
 
-    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "black";
     ctx.beginPath();
 
@@ -205,9 +205,34 @@ window.addEventListener("load", function () {
     update();
 });
 
-canvas.addEventListener('click', function() {
+function getMousePos(canvas, event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+}
+
+function isInside(mouseX, mouseY, x, y, width, height){
+    return mouseX > x && mouseX < x+width && mouseY < y+height && mouseY > y;
+}
+
+canvas.addEventListener('click', function(event) {
+    var mousePos = getMousePos(canvas, event);
     if (screen === 0) {
         screen = 1;
         update();
+    } else if (screen === 1) {
+        if (isInside(mousePos.x % 250*r, mousePos.y, 50*r, 360*r, 200*r, 40*r)) {
+            screen = 2;
+            world = Math.floor(mousePos.x/250)
+            update();
+        }
+    } else if (screen === 2) {
+        if (isInside(mousePos.x % 100*r, mousePos.y, 50*r, 360*r, 200*r, 40*r)) {
+            screen = 2;
+            world = Math.floor(mousePos.x/250)
+            update();
+        }
     }
 }, false);
