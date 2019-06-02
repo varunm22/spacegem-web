@@ -10,8 +10,8 @@ var canvas = document.getElementById("canvas"),
     player = {
         x: width / 2,
         y: height - 15,
-        width: 5,
-        height: 5,
+        width: 15,
+        height: 15,
         speed: 3,
         velX: 0,
         velY: 0,
@@ -23,7 +23,9 @@ var canvas = document.getElementById("canvas"),
     gravity = 0.3,
     r = 1.0,
     world = 0,
-    level = 0;
+    level = 0,
+    level_progress = [0,0,0],
+    colors = ["#ff0000", "#ff8000", "#f0e000", "#00c000", "#0080ff", "#4000ff", "#c000ff"];
 
 
 canvas.width = width;
@@ -31,22 +33,30 @@ canvas.height = height;
 
 var screen = 0;
 
+//testing config
+level = 0;
+screen = 2;
+
 function update() {
     ctx.clearRect(0, 0, width, height);
     if (screen === 0) {
-        update_title()
+        update_title();
     } else if (screen === 1) {
-        update_worlds()
+        update_worlds();
     } else if (screen === 2) {
-        update_levels()
+        update_levels();
     } else if (screen === 3) {
-        update_platformer()
+        update_platformer();
     } else if (screen === 4) {
-        update_spaceships()
+        update_spaceships();
     } else if (screen === 5) {
-        update_intervals()
+        update_intervals();
     } else if (screen === 6) {
-        update_narrative() // TODO: make external thing for this
+        update_victory();
+    } else if (screen === 7) {
+        update_defeat();
+    } else if (screen === 8) {
+        update_narrative(); // TODO: make external thing for this
     }
 }
 
@@ -89,6 +99,10 @@ function update_levels() {
     ctx.strokeStyle = "white";
     var i;
     for (i = 0; i < leveldata.world[world].level.length; i++) {
+        if (i > level_progress[world]) {
+            ctx.fillStyle = "#808080";
+            ctx.strokeStyle = "#808080";
+        }
         ctx.fillText(i+1, 100+i*100*r, 400*r);
         ctx.beginPath();
         ctx.arc(100+i*100*r, 385*r, 30, 0, Math.PI * 2, true); // Outer circle
@@ -121,6 +135,25 @@ function update_platformer() {
 
     player.velX *= friction;
     player.velY += gravity;
+
+    var gems = leveldata.world[0].level[level].gems;
+    var target = leveldata.world[0].level[level].target;
+
+    for (var i = 0; i < gems.length; i++) {
+        ctx.fillStyle = colors[gems[i].color];
+        ctx.rect(gems[i].x*r, gems[i].y*r, 15*r, 15*r);
+        ctx.fill();
+        if (gemColCheck(player, gems[i])) {
+            if (gems[i].color === target) {
+                screen = 6;
+                level_progress[world] = level + 1;
+                update();
+            } else {
+                screen = 7;
+                update();
+            }
+        }
+    }
 
     ctx.fillStyle = "black";
     ctx.beginPath();
@@ -157,6 +190,10 @@ function update_platformer() {
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
     requestAnimationFrame(update);
+}
+
+function gemColCheck(player, gem) {
+    return player.x 
 }
 
 function colCheck(shapeA, shapeB) {
@@ -216,6 +253,7 @@ function getMousePos(canvas, event) {
 }
 
 function isInside(mouseX, mouseY, x, y, width, height){
+    //console.log(mouseX, mouseY, x, y, width, height);
     return mouseX > x && mouseX < x+width && mouseY < y+height && mouseY > y;
 }
 
@@ -227,14 +265,16 @@ canvas.addEventListener('click', function(event) {
     } else if (screen === 1) {
         if (isInside(mousePos.x % 250*r, mousePos.y, 50*r, 360*r, 200*r, 40*r)) {
             screen = 2;
-            world = Math.floor(mousePos.x/250)
+            world = Math.floor(mousePos.x/250);
             update();
         }
     } else if (screen === 2) {
-        if (isInside(mousePos.x % 100*r, mousePos.y, 50*r, 360*r, 200*r, 40*r)) {
-            screen = 3;
-            level = Math.floor(mousePos.x/100)
-            update();
+        if (isInside((mousePos.x-50) % (100*r), mousePos.y, 20*r, 355*r, 60*r, 60*r)) {
+            level = Math.floor((mousePos.x-50)/100);
+            if (level <= level_progress[world]) {
+                screen = 3;
+                update();
+            }
         }
     }
 }, false);
